@@ -3,10 +3,13 @@ package models
 import (
 	"time"
 	"github.com/astaxie/beego/orm"
+	"github.com/doggytty/goutils/encrypt"
+	"errors"
+	"fmt"
 )
 
 type Administrator struct {
-	Email string `orm:"size(50);column(email);unique"`
+	Email string `orm:"size(50);pk;column(email)"`
 }
 
 func (ad *Administrator) InsertAdministrator(email string) bool {
@@ -46,24 +49,61 @@ func (ui *UserInfo) TableName() string {
 	return "user_info"
 }
 
-func (ui *UserInfo) IsAdministrator() bool {
+func (ui *UserInfo) IsAdministrator(uid string) *UserInfo {
 	logger.Debug("is user %s administrator?", ui.Email)
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(Administrator))
-	count, err := qs.Filter("email", ui.Email).Count()
+	err := o.Raw("SELECT ui.* FROM user_info ui, administrator ad WHERE ui.email=ad.email and ui.uid = ?", uid).QueryRow(&ui)
 	if err != nil {
 		logger.Error("query administrator failed!", err)
-		return false
+		return nil
 	}
-	if count == 1 {
-		return true
+	return ui
+}
+
+func (ui *UserInfo) GetById(uid string) *UserInfo {
+	o := orm.NewOrm()
+	ui.Uid = uid
+	err := o.Read(&ui)
+	if err == orm.ErrNoRows {
+		logger.Error("query not exist:", uid)
+	} else if err == orm.ErrMissPK {
+		logger.Error("can not find pk", uid)
+	} else {
+		return ui
 	}
-	return false
+	return nil
+}
+
+func (ui *UserInfo) SetPassword(password string) {
+	md5password := encrypt.Md5String(password)
+	ui.Password = md5password
+}
+
+func (ui *UserInfo) CheckUserInfo(email, password string) (*UserInfo, error) {
+	ui.Email = email
+	ui.SetPassword(password)
+
+	o := orm.NewOrm()
+	qs := o.QueryTable(ui)
+
+	var user []*UserInfo
+	num, err := qs.Filter("email", email).Filter("password", password).All(&user)
+	if err != nil {
+		logger.Error("query by username,password failed, %s", err)
+		return nil, err
+	}
+	if num == 1 {
+		logger.Debug("query success")
+		return user[0], nil
+	}
+	logger.Error("more than one person email is %s", email)
+	return nil, errors.New(fmt.Sprintf("there is %d user email is %s", num, email))
 }
 
 
 // 用户登录/退出系统记录
 type UserLogin struct {
+	Id int `orm:"pk;auto;column(id)"`
 	Uid string `orm:"size(32);column(uid);index(idx_uid)"`
 	LoginIp string `orm:"column(login_ip)"`	// 登陆ip
 	Sid string `orm:"column(sid);index(idx_sid)"`	// 登录的子系统
@@ -76,8 +116,17 @@ func (ul *UserLogin) TableName() string {
 	return "user_login"
 }
 
-func (ul *UserLogin) InsertUserLogin() bool {
-
+func (ul *UserLogin) InsertUserLogin(uid, ip, appId string, isLogin bool) int {
+	o := orm.NewOrm()
+	ul.Uid = uid
+	ul.LoginIp = ip
+	ul.Sid = appId
+	ul.IsLogin = isLogin
+	ulId, err := o.Insert(&ul)
+	if err == nil {
+		return int(ulId)
+	}
+	return -1
 }
 
 
@@ -85,6 +134,7 @@ func (ul *UserLogin) InsertUserLogin() bool {
 
 // 用户-系统对应关系
 type UserAuth struct {
+	Id int `orm:"pk;auto;column(id)"`
 	Uid string `orm:"size(32);column(uid)"`
 	Sid string `orm:"size(20);column(sid)"`
 	IsAdministrator bool `orm:"column(is_administrator)"`

@@ -6,18 +6,32 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
+var logger = logs.NewLogger()
+
+func init()  {
+	logger.Async()
+	logger.EnableFuncCallDepth(true)
+	if beego.BConfig.RunMode == "dev" {
+		logger.SetLogger(logs.AdapterConsole)
+	} else {
+		logger.SetLogger(logs.AdapterFile, `{"filename":"controller.log","daily":true,"maxdays":10}`)
+	}
+}
+
+
 type BaseController struct {
 	beego.Controller
 }
 
 func (base *BaseController) Init(ctx *context.Context, controllerName, actionName string, app interface{})  {
 	// 调用默认初始化设置
+	logger.Debug("base controller Init")
 	base.Controller.Init(ctx, controllerName, actionName, app)
 }
 
 
 func (base *BaseController) Prepare() {
-	logs.Debug("base controller Prepare")
+	logger.Debug("base controller Prepare")
 	base.Layout = "layout/base.html"
 	base.LayoutSections = make(map[string]string)
 	base.LayoutSections["Header"] = "layout/header.html"
@@ -55,10 +69,3 @@ func (base *BaseController) Rsp(result bool, err string) {
 	base.ServeJSON()
 }
 
-func (base *BaseController) NoAuth()  {
-	if base.IsAjax() {
-		base.Rsp(false, "no auth to access!")
-	} else {
-		base.TplName = "noauth.tpl"
-	}
-}

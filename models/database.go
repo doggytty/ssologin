@@ -20,9 +20,9 @@ func SyncDataBase()  {
 	// 数据库别名
 	name := "default"
 	// drop table 后再建表
-	force := true
+	force := false
 	// 打印执行过程
-	verbose := false
+	verbose := true
 	// 遇到错误立即返回
 	err := orm.RunSyncdb(name, force, verbose)
 	if err != nil {
@@ -53,6 +53,9 @@ func connDatabase()  {
 	orm.RegisterDataBase("default", db_type, dns)
 	orm.SetMaxIdleConns("default", 30)
 	orm.SetMaxOpenConns("default", 30)
+	orm.RegisterModel(new(UserInfo), new(Administrator), new(UserLogin), new(UserAuth))
+	orm.RegisterModel(new(SubSystem), new(SubProperties))
+	//orm.RegisterModel(new(Session))
 
 }
 
@@ -79,11 +82,10 @@ func createDatabase() {
 	}
 	defer db.Close()
 
-	r, err := db.Exec(sqlString)
+	_, err = db.Exec(sqlString)
 	if err != nil {
 		logger.Error("create db failed!", err)
 	} else {
-		logger.Debug("result:%v", r)
 		logger.Debug("Database %s created", db_name)
 	}
 }
@@ -94,6 +96,6 @@ func init()  {
 	if beego.BConfig.RunMode == "dev" {
 		logger.SetLogger(logs.AdapterConsole)
 	} else {
-		logger.SetLogger(logs.AdapterFile, `{"filename":"database.log"}`)
+		logger.SetLogger(logs.AdapterFile, `{"filename":"database.log","daily":true,"maxdays":10}`)
 	}
 }

@@ -28,3 +28,7 @@
 .footer ul li {
     line-height: 100%;
 }
+
+.auto_height {
+    height: 100%;
+}
