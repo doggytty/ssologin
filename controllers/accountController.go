@@ -60,25 +60,63 @@ func (l *LoginController) autoLogin()  {
 }
 
 func (l *LoginController) Get() {
-	l.Data["xsrfdata"] = template.HTML(l.XSRFFormHTML())
-	l.TplName = "login.html"
+	redirectUrl := l.GetString("redirect_url")
+	appId := l.GetString("app_id")
+	clientSecret := l.GetString("client_secret")
+	// session中有数据
+	uid := l.GetSession("uid")
+	if uid != nil {
+		// 校验客户端是否
+		subSystem := new(models.SubSystem)
+		subSystem = subSystem.GetSubSystemById(appId)
+		if subSystem == nil {
+			logger.Error("app_id is not right!")
+			flash := beego.NewFlash()
+			flash.Set("status", "11011")
+			flash.Store(&l.Controller)
+			l.Redirect("/noAuth", 302)
+			return
+		}
+		// 校验app_id\client_secret
+		client_id := encrypt.Md5String(fmt.Sprintf("%s:%s", appId, encrypt.Md5String(clientSecret)))
+		if client_id != subSystem.ClientId {
+			logger.Error("app_id/client_secret is not right!")
+			flash := beego.NewFlash()
+			flash.Set("status", "11012")
+			flash.Store(&l.Controller)
+			l.Redirect("/noAuth", 302)
+			return
+		}
+		logger.Debug("user %s is online, no return to %s", uid, redirectUrl)
+		// 写日志
+		ul := new(models.UserLogin)
+		ulId := ul.InsertUserLogin(uid.(string), l.Ctx.Input.IP(), appId, true)
+		if ulId < 0 {
+			logger.Error("user login into db failed!")
+		}
+		// 跳转到对应的url
+		tmpUrl := fmt.Sprintf("%s?uid=%s&redirect_url=%s", subSystem.SUrl, uid, redirectUrl)
+		logger.Debug(tmpUrl)
+		l.Redirect(tmpUrl, 302)
+	} else {
+		l.Data["xsrfdata"] = template.HTML(l.XSRFFormHTML())
+		l.Data["RedirectUrl"] = redirectUrl
+		l.Data["AppId"] = appId
+		l.Data["ClientSecret"] = clientSecret
+		l.TplName = "login.html"
+	}
 }
 
 func (l *LoginController) Post() {
-	redirect_url := l.GetString("redirect_url")
-	app_id := l.GetString("app_id")
-	client_secret := l.GetString("client_secret")
+	redirectUrl := l.GetString("redirect_url")
+	appId := l.GetString("app_id")
+	clientSecret := l.GetString("client_secret")
 	email := l.GetString("email")
 	password := l.GetString("password")
-	logger.Debug("redirect: %s", redirect_url)
-	logger.Debug("app_id : %s", app_id)
-	logger.Debug("client_secret : %s", client_secret)
-	logger.Debug("email : %s", email)
-	logger.Debug("password : %s", password)
 
 	// 校验客户端是否注册
 	subSystem := new(models.SubSystem)
-	subSystem = subSystem.GetSubSystemById(app_id)
+	subSystem = subSystem.GetSubSystemById(appId)
 	if subSystem == nil {
 		logger.Error("app_id is not right!")
 		flash := beego.NewFlash()
@@ -88,8 +126,8 @@ func (l *LoginController) Post() {
 		return
 	}
 	// 校验app_id\client_secret
-	client_id := encrypt.Md5String(fmt.Sprintf("%s:%s", app_id, encrypt.Md5String(client_secret)))
-	if client_id != subSystem.ClientId {
+	clientId := encrypt.Md5String(fmt.Sprintf("%s:%s", appId, encrypt.Md5String(clientSecret)))
+	if clientId != subSystem.ClientId {
 		logger.Error("app_id/client_secret is not right!")
 		flash := beego.NewFlash()
 		flash.Set("status", "11012")
@@ -100,19 +138,13 @@ func (l *LoginController) Post() {
 	// 判断用户是否在共享session中有数据
 	uid := l.GetSession("uid")
 	if uid != nil {
-		logger.Debug("user %s is online, no return to %s", uid, redirect_url)
+		logger.Debug("user %s is online, no return to %s", uid, redirectUrl)
 		// 写日志
 		ul := new(models.UserLogin)
-		ulId := ul.InsertUserLogin(uid.(string), l.Ctx.Input.IP(), app_id, true)
+		ulId := ul.InsertUserLogin(uid.(string), l.Ctx.Input.IP(), appId, true)
 		if ulId < 0 {
 			logger.Error("user login into db failed!")
 		}
-		// todo 发送用户状态到用户状态信道
-		// 跳转到对应的url
-		tmpUrl := fmt.Sprintf("%s?uid=%s&redirect_url=%s", subSystem.SUrl, uid, redirect_url)
-		// 将用户uid添加到
-		l.Redirect(tmpUrl, 302)
-		return
 	} else {
 		// user login
 		userInfo := new(models.UserInfo)
@@ -120,21 +152,29 @@ func (l *LoginController) Post() {
 		if err != nil {
 			logger.Error("username password is not right!")
 			flash := beego.NewFlash()
-			flash.Set("status", "11013")
+			flash.Set("status", "11014")
 			flash.Store(&l.Controller)
 			l.Redirect("/noAuth", 302)
 			return
 		}
-
-		l.SetSession("uid", "")
+		if userInfo.Status == -1 {
+			logger.Error("user is probi password is not right!")
+			flash := beego.NewFlash()
+			flash.Set("status", "11014")
+			flash.Store(&l.Controller)
+			l.Redirect("/noAuth", 302)
+			return
+		}
+		// set session
+		uid = userInfo.Uid
+		l.SetSession("uid", userInfo.Uid)
 	}
-
-
-	l.Data["Website"] = "beego.me"
-	l.Data["Email"] = "astaxie@gmail.com"
-	l.SetSession("uid", 110)
-	//l.Ctx.Request.AddCookie()
-	l.Redirect("/index", 302)
+	// todo 发送用户状态到用户状态信道
+	tmpUrl := fmt.Sprintf("%s?uid=%s&redirect_url=%s", subSystem.SUrl, uid, redirectUrl)
+	logger.Debug(tmpUrl)
+	// 将用户uid添加到
+	l.TplName = "index.html"
+	l.Redirect(tmpUrl, 302)
 }
 
 func (l *LoginController) NoAuth()  {
@@ -162,6 +202,15 @@ func (l *LoginController) NotAdmin()  {
 	} else {
 		l.TplName = "notAdmin.tpl"
 	}
+}
+
+func (l *LoginController) Status()  {
+	uid := l.Ctx.Input.Param(":uid")
+	// 判断用户是否在线
+	// 检查用户的最后操作时间,使用redis
+	l.Data["json"] = map[string]interface{}{"uid": uid, "status": "online"}
+	l.ServeJSON()
+	// l.Ctx.WriteString("hello")
 }
 
 func (l *LoginController) Rsp(result bool, err string) {

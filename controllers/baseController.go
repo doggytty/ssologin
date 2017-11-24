@@ -39,6 +39,9 @@ func (base *BaseController) Prepare() {
 	base.LayoutSections["Styles"] = "layout/styles.html"
 	base.LayoutSections["Footer"] = "layout/footer.html"
 	base.LayoutSections["Navigation"] = "layout/navigation.html"
+	// 判断用户是否登陆
+	uid := base.GetSession("uid")
+	base.Data["IsLogin"] = uid != nil
 
 
 	//if ctx.BeegoInput.Query("_method")!="" && ctx.BeegoInput.IsPost(){

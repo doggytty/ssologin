@@ -31,14 +31,13 @@ func FilterLogin(ctx *context.Context) {
 		// 如果是登录,清理所有的session信息
 		ctx.Input.CruSession.Flush()
 		// todo 用户所有的监控状态重置
-		logger.Debug("%s login system", uid)
+		logger.Debug("login system")
 	} else if collections.Contains(ExcludeUrl, currURI) {
 		// 系统退出
 		// todo 重置所有监控状态
 		logger.Debug("%s logout system", uid)
 	} else {
 		logger.Debug("current url: %s", currURI)
-		logger.Debug("current uid: %s", uid)
 		if uid == nil {
 			ctx.Redirect(302, "/login")
 		} else {
@@ -73,6 +72,6 @@ func FilterAdministrator(ctx *context.Context)  {
 // 屏蔽黑名单访问,防止DDOS
 func FilterBlackDDOS(ctx *context.Context)  {
 	// 获取黑名单信息
-	// 获取当前请求的ip地址是否在黑名单中(原始地址\)
+	// 获取当前请求的ip地址是否在黑名单中(原始地址)
 }
 

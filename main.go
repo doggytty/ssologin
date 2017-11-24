@@ -6,7 +6,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/doggytty/ssologin/models"
-	"github.com/doggytty/ssologin/filters"
 	"fmt"
 )
 
@@ -51,8 +50,8 @@ func main() {
 	db_port := beego.AppConfig.String("db_port")
 	db_user := beego.AppConfig.String("db_user")
 	db_pass := beego.AppConfig.String("db_pass")
-	beego.BConfig.WebConfig.Session.SessionProviderConfig =
-		fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8", db_user, db_pass, db_host, db_port)
+	db_name := beego.AppConfig.String("db_name")
+	beego.BConfig.WebConfig.Session.SessionProviderConfig = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", db_user, db_pass, db_host, db_port, db_name)
 	//beego.BConfig.WebConfig.Session.SessionProvider = "memory"
 	//beego.BConfig.WebConfig.Session.SessionProvider = "redis"
 	//beego.BConfig.WebConfig.Session.SessionProviderConfig = "127.0.0.1:6379"
@@ -67,9 +66,9 @@ func main() {
 	// 1、黑/白名单、DDOS防止
 	//beego.InsertFilter("/*", beego.BeforeStatic, filters.FilterBlackDDOS)
 	// 2、session filter
-	beego.InsertFilter("/*", beego.BeforeRouter, filters.FilterLogin)
+	//beego.InsertFilter("/*", beego.BeforeRouter, filters.FilterLogin)
 	// 3、admin filter
-	beego.InsertFilter("/admin/*", beego.BeforeRouter, filters.FilterAdministrator)
+	//beego.InsertFilter("/admin/*", beego.BeforeRouter, filters.FilterAdministrator)
 	// 启动beego
 	beego.Run("127.0.0.1:8080")
 }

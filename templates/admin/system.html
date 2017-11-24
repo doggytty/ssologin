@@ -1,0 +1,43 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td></td>
+        <td>Sid</td>
+        <td>SName</td>
+        <td>ClientId</td>
+        <td>ClientSecret</td>
+        <td>SUrl</td>
+        <td>Status</td>
+        <td>CreateTime</td>
+        <td>操作</td>
+    </tr>
+    </thead>
+    <tbody>
+    {{range $index, $subSystem := .PageSystem}}
+    <tr>
+        <td>{{$index}}</td>
+        <td>{{$subSystem.Sid}}</td>
+        <td>{{$subSystem.SName}}</td>
+        <td>{{$subSystem.ClientId}}</td>
+        <td>{{$subSystem.ClientSecret}}</td>
+        <td>{{$subSystem.SUrl}}</td>
+        <td>{{$subSystem.Status}}</td>
+        <td>{{$subSystem.CreateTime}}</td>
+        <td>
+            <button>察看</button>
+            <button>删除</button>
+        </td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+
+<div>
+    <ul class="pagination">
+        <li>1</li>
+        <li>前一页</li>
+
+        <li>后一页</li>
+        <li>{{}}</li>
+    </ul>
+</div>

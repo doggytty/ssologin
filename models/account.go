@@ -87,7 +87,7 @@ func (ui *UserInfo) CheckUserInfo(email, password string) (*UserInfo, error) {
 	qs := o.QueryTable(ui)
 
 	var user []*UserInfo
-	num, err := qs.Filter("email", email).Filter("password", password).All(&user)
+	num, err := qs.Filter("email", email).Filter("password", ui.Password).All(&user)
 	if err != nil {
 		logger.Error("query by username,password failed, %s", err)
 		return nil, err
@@ -98,6 +98,26 @@ func (ui *UserInfo) CheckUserInfo(email, password string) (*UserInfo, error) {
 	}
 	logger.Error("more than one person email is %s", email)
 	return nil, errors.New(fmt.Sprintf("there is %d user email is %s", num, email))
+}
+
+func (ui *UserInfo) LastUserInfo(beginIndex, pageSize int) []*UserInfo {
+	o := orm.NewOrm()
+	qs := o.QueryTable(ui)
+
+	var users []*UserInfo
+	querySetter := qs.OrderBy("-create_time")
+	if beginIndex == 0 {
+		querySetter = querySetter.Limit(pageSize)
+	} else {
+		querySetter = querySetter.Limit(beginIndex, pageSize)
+	}
+	num, err := querySetter.All(&users)
+	if err != nil {
+		logger.Error("query userInfo failed", err)
+		return nil
+	}
+	logger.Debug("query userInfo %d", num)
+	return users
 }
 
 
@@ -122,14 +142,31 @@ func (ul *UserLogin) InsertUserLogin(uid, ip, appId string, isLogin bool) int {
 	ul.LoginIp = ip
 	ul.Sid = appId
 	ul.IsLogin = isLogin
-	ulId, err := o.Insert(&ul)
+	ulId, err := o.Insert(ul)
 	if err == nil {
 		return int(ulId)
 	}
 	return -1
 }
 
-
+func (ul *UserLogin) LastUserLogin(beginIndex, pageSize int) []*UserLogin {
+	o := orm.NewOrm()
+	qs := o.QueryTable(ul)
+	var userLogin []*UserLogin
+	querySetter := qs.OrderBy("-id")
+	if beginIndex == 0 {
+		querySetter = querySetter.Limit(pageSize)
+	} else {
+		querySetter = querySetter.Limit(beginIndex, pageSize)
+	}
+	num, err := querySetter.All(&userLogin)
+	if err != nil {
+		logger.Error("query userLogin failed", err)
+		return nil
+	}
+	logger.Debug("query userLogin %d", num)
+	return userLogin
+}
 
 
 // 用户-系统对应关系

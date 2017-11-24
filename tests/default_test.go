@@ -10,11 +10,16 @@ import (
 
 	"github.com/astaxie/beego"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/doggytty/goutils/stringutil"
+	"fmt"
+	"github.com/doggytty/goutils/encrypt"
 )
 
 func init() {
 	_, file, _, _ := runtime.Caller(1)
 	apppath, _ := filepath.Abs(filepath.Dir(filepath.Join(file, ".." + string(filepath.Separator))))
+	apppath = filepath.Dir(apppath)
+	fmt.Println(apppath)
 	beego.TestBeegoInit(apppath)
 }
 
@@ -35,5 +40,20 @@ func TestBeego(t *testing.T) {
 	                So(w.Body.Len(), ShouldBeGreaterThan, 0)
 	        })
 	})
+}
+
+func TestRandom(t *testing.T)  {
+	app_id := stringutil.GenerateStringsSize(12)
+	client_secret := stringutil.GenerateStringsSize(16)
+	client_id := encrypt.Md5String(fmt.Sprintf("%s:%s", app_id, encrypt.Md5String(client_secret)))
+
+	fmt.Println(fmt.Sprintf("app_id: %s", app_id))
+	fmt.Println(fmt.Sprintf("client_secret: %s", client_secret))
+	fmt.Println(fmt.Sprintf("client_id: %s", client_id))
+
+	email := "sunlichuan@we.com"
+	password := encrypt.Md5String("sunlichuan@we.com")
+	fmt.Println(fmt.Sprintf("email: %s", email))
+	fmt.Println(fmt.Sprintf("password: %s", password))
 }
 

@@ -6,8 +6,11 @@
         <div class="col-md-8 header">
         </div>
         <div class="col-md-2 header">
-            <button>登录</button>
-            <button >退出</button>
+            {{if .IsLogin}}
+                <button >退出</button>
+            {{else}}
+                <button >登录</button>
+            {{end}}
         </div>
     </div>
 </div>
