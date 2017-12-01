@@ -35,9 +35,48 @@ func (ui *SubSystem) GetSubSystemById(appId string) *SubSystem {
 	return nil
 }
 
+func (ui *SubSystem) CountByQuery(paramMap map[string]string) int {
+	o := orm.NewOrm()
+	qs := o.QueryTable(ui)
+	if paramMap == nil || len(paramMap) == 0 {
+		result, err := qs.Count()
+		if err != nil {
+			logger.Error("query subsystem count failed, %v", err)
+			return 0
+		}
+		return int(result)
+	}
+	querySetter := qs.SetCond(orm.NewCondition())
+	sid, ok := paramMap["sid"]
+	if ok {
+		querySetter = querySetter.Filter("sid__icontains", sid)
+	}
+	sysName, ok := paramMap["sys_name"]
+	if ok {
+		querySetter = querySetter.Filter("sys_name__icontains", sysName)
+	}
+	clientId, ok := paramMap["client_id"]
+	if ok {
+		querySetter = querySetter.Filter("client_id__icontains", clientId)
+	}
+	clientSecret, ok := paramMap["client_secret"]
+	if ok {
+		querySetter = querySetter.Filter("client_secret__icontains", clientSecret)
+	}
+	sysUrl, ok := paramMap["sys_url"]
+	if ok {
+		querySetter = querySetter.Filter("sys_url__icontains", sysUrl)
+	}
+	result, err := querySetter.Count()
+	if err != nil {
+		logger.Error("query subsystem count failed, %v", err)
+		return 0
+	}
+	return int(result)
+}
 
 // 查询最新的10个系统
-func (ui *SubSystem) QueryByPage(beginIndex, pageSize int) []*SubSystem {
+func (ui *SubSystem) QueryByPage(beginIndex, pageSize int, paramMap map[string]string) []*SubSystem {
 	o := orm.NewOrm()
 	qs := o.QueryTable(ui)
 
@@ -48,6 +87,28 @@ func (ui *SubSystem) QueryByPage(beginIndex, pageSize int) []*SubSystem {
 	} else {
 		querySetter = querySetter.Limit(beginIndex, pageSize)
 	}
+	if paramMap != nil && len(paramMap) > 0 {
+		sid, ok := paramMap["sid"]
+		if ok {
+			querySetter = querySetter.Filter("sid__icontains", sid)
+		}
+		sysName, ok := paramMap["sys_name"]
+		if ok {
+			querySetter = querySetter.Filter("sys_name__icontains", sysName)
+		}
+		clientId, ok := paramMap["client_id"]
+		if ok {
+			querySetter = querySetter.Filter("client_id__icontains", clientId)
+		}
+		clientSecret, ok := paramMap["client_secret"]
+		if ok {
+			querySetter = querySetter.Filter("client_secret__icontains", clientSecret)
+		}
+		sysUrl, ok := paramMap["sys_url"]
+		if ok {
+			querySetter = querySetter.Filter("sys_url__icontains", sysUrl)
+		}
+	}
 	num, err := querySetter.All(&subSystem)
 	if err != nil {
 		logger.Error("query subsystem failed", err)
@@ -57,6 +118,42 @@ func (ui *SubSystem) QueryByPage(beginIndex, pageSize int) []*SubSystem {
 	return subSystem
 }
 
+func (ui *SubSystem) ModifySubSystem() bool {
+	o := orm.NewOrm()
+	// 获取 QuerySeter 对象，user 为表名
+	qs := o.QueryTable("user")
+	params := orm.Params{}
+	if ui.SName != "" {
+		params["sys_name"] = ui.SName
+	}
+	if ui.ClientId != "" {
+		params["client_id"] = ui.ClientId
+	}
+	if ui.ClientSecret != "" {
+		params["client_secret"] = ui.ClientSecret
+	}
+	if ui.SUrl != "" {
+		params["sys_url"] = ui.SUrl
+	}
+	if ui.Status != "" {
+		params["sys_status"] = ui.Status
+	}
+	num, err := qs.Filter("sid", ui.Sid).Update(params)
+	if err == nil {
+		return num == 1
+	}
+	return false
+}
+
+func (ui *SubSystem) DeleteSubSystem(sid string) bool {
+	o := orm.NewOrm()
+	ui.Sid = sid
+	num, err := o.Delete(ui)
+	if err == nil {
+		return num == 1
+	}
+	return false
+}
 
 // 系统属性表格
 type SubProperties struct {

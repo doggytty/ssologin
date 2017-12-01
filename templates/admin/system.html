@@ -1,28 +1,32 @@
 <table class="table table-striped">
     <thead>
     <tr>
-        <td></td>
-        <td>Sid</td>
-        <td>SName</td>
-        <td>ClientId</td>
-        <td>ClientSecret</td>
-        <td>SUrl</td>
-        <td>Status</td>
-        <td>CreateTime</td>
+        <td>系统ID</td>
+        <td>系统名称</td>
+        <!--<td>秘钥ID</td>-->
+        <!--<td>Secret</td>-->
+        <td>回调</td>
+        <td>状态</td>
+        <td>创建时间</td>
         <td>操作</td>
     </tr>
     </thead>
     <tbody>
     {{range $index, $subSystem := .PageSystem}}
     <tr>
-        <td>{{$index}}</td>
         <td>{{$subSystem.Sid}}</td>
         <td>{{$subSystem.SName}}</td>
-        <td>{{$subSystem.ClientId}}</td>
-        <td>{{$subSystem.ClientSecret}}</td>
+        <!--<td>{{$subSystem.ClientId}}</td>-->
+        <!--<td>{{$subSystem.ClientSecret}}</td>-->
         <td>{{$subSystem.SUrl}}</td>
-        <td>{{$subSystem.Status}}</td>
-        <td>{{$subSystem.CreateTime}}</td>
+        <td>
+            {{if eq $subSystem.Status "0"}}
+            未激活
+            {{else}}
+            激活
+            {{end}}
+        </td>
+        <td>{{dateformat $subSystem.CreateTime "2006-01-02 15:04:05"}}</td>
         <td>
             <button>察看</button>
             <button>删除</button>
@@ -34,10 +38,33 @@
 
 <div>
     <ul class="pagination">
-        <li>1</li>
-        <li>前一页</li>
+        {{if paginationShowFirst .Pagination.CurrentPage}}
+        {{$firstUrl := paginationJump 1 $.Pagination.PageSize ""}}
+        <li><a href="/admin/system?{{$firstUrl}}" >1</a></li>
+        {{end}}
 
-        <li>后一页</li>
-        <li>{{}}</li>
+        {{if paginationShowPrefix .Pagination.CurrentPage}}
+        {{$prefixUrl := paginationPrefix "" .Pagination.CurrentPage .Pagination.PageSize}}
+        <li><a href="/admin/system?{{$prefixUrl}}" >前一页</a></li>
+        {{else}}
+        <li><a class="disabled">前一页</a></li>
+        {{end}}
+
+        {{range $key, $val := paginationGetPageNumber .Pagination.CurrentPage .Pagination.TotalPage}}
+        {{$currentUrl := paginationJump $val $.Pagination.PageSize ""}}
+        <li><a href="/admin/system?{{$currentUrl}}">{{$val}}</a></li>
+        {{end}}
+
+        {{if paginationShowSuffix .Pagination.CurrentPage .Pagination.TotalPage}}
+        {{$suffixUrl := paginationSuffix "" .Pagination.CurrentPage .Pagination.PageSize .Pagination.TotalPage}}
+        <li><a href="/admin/system?{{$suffixUrl}}" >后一页</a></li>
+        {{else}}
+        <li><a class="disabled">后一页</a></li>
+        {{end}}
+
+        {{if paginationShowLast .Pagination.CurrentPage .Pagination.TotalPage}}
+        {{$lastUrl := paginationJump .Pagination.TotalPage $.Pagination.PageSize ""}}
+        <li><a href="/admin/system?{{$lastUrl}}">{{.Pagination.TotalPage}}</a></li>
+        {{end}}
     </ul>
 </div>

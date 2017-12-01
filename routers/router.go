@@ -17,7 +17,7 @@ func init() {
 	beego.Router("/admin/index", &controllers.AdminController{})
 
 	beego.Router("/admin/system", &controllers.SystemController{})
-	beego.Router("/admin/system/:sid", &controllers.SystemController{})
+	beego.Router("/admin/system/:sid", &controllers.SystemController{}, "get:DetailSystem;post:ModifySystem")
 
 	beego.Router("/admin/userinfo", &controllers.AdminController{})
 	beego.Router("/admin/sysuser", &controllers.AdminController{})

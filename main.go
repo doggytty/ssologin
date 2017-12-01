@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/doggytty/ssologin/models"
 	"fmt"
+	"github.com/doggytty/ssologin/utils"
 )
 
 func main() {
@@ -69,6 +70,20 @@ func main() {
 	//beego.InsertFilter("/*", beego.BeforeRouter, filters.FilterLogin)
 	// 3、admin filter
 	//beego.InsertFilter("/admin/*", beego.BeforeRouter, filters.FilterAdministrator)
+
+	// 自定义template函数
+	beego.AddFuncMap("paginationJump",utils.Jump)
+	beego.AddFuncMap("paginationPrefix",utils.Prefix)
+	beego.AddFuncMap("paginationSuffix",utils.Suffix)
+	beego.AddFuncMap("paginationShowPrefix",utils.ShowPrefix)
+	beego.AddFuncMap("paginationShowSuffix",utils.ShowSuffix)
+	beego.AddFuncMap("paginationShowFirst",utils.ShowFirst)
+	beego.AddFuncMap("paginationShowLast",utils.ShowLast)
+	beego.AddFuncMap("paginationGetPageNumber",utils.GetPageNumber)
+	beego.AddFuncMap("paginationGetBeginIndex",utils.GetBeginIndex)
+	beego.AddFuncMap("paginationGetEndIndex",utils.GetEndIndex)
+	beego.AddFuncMap("paginationGetTotalPage",utils.GetTotalPage)
+
 	// 启动beego
 	beego.Run("127.0.0.1:8080")
 }
