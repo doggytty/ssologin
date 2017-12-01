@@ -89,7 +89,7 @@ func (sc *SystemController) Get() {
 }
 
 func (sc *SystemController) DetailSystem ()  {
-	sid := sc.Ctx.Input.Param("sid")
+	sid := sc.Ctx.Input.Param(":sid")
 	logger.Debug("now sid :%s", sid)
 	if sid == "new" {
 		logger.Debug("now create subSystem!")
