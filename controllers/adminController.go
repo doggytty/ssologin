@@ -4,6 +4,7 @@ import (
 	"github.com/doggytty/ssologin/models"
 	"github.com/doggytty/goutils/htmlutil"
 	"github.com/astaxie/beego"
+	"github.com/doggytty/goutils/stringutil"
 )
 
 type AdminController struct {
@@ -79,6 +80,27 @@ func (sc *SystemController) Get() {
 
 	beginIndex := pageSize * (pageIndex - 1)
 	subSystem := new(models.SubSystem)
+	pageSystem := subSystem.QueryByPage(beginIndex, pageSize, paramMap)
+	totalRecord := subSystem.CountByQuery(paramMap)
+
+	p := htmlutil.NewPagination(pageSize, pageIndex, totalRecord)
+	sc.Data["PageSystem"] = pageSystem
+	sc.Data["Pagination"] = p
+	sc.TplName = "admin/system.html"
+}
+
+// 新增系统
+func (sc *SystemController) Post() {
+	// 其它查询条件
+	sysIdString := stringutil.GenerateStringsSize(16)
+	clientIdString := stringutil.GenerateStringsSize(12)
+	clientSecretString := stringutil.GenerateStringsSize(32)
+	sysNameString := sc.GetString("sysName", "")
+	sysUrlString := sc.GetString("sysUrl", "")
+	statusString := sc.GetString("status", "")
+
+	subSystem := new(models.SubSystem)
+	subSystem.DeleteSubSystem()
 	pageSystem := subSystem.QueryByPage(beginIndex, pageSize, paramMap)
 	totalRecord := subSystem.CountByQuery(paramMap)
 

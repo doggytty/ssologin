@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/astaxie/beego/orm"
 	"time"
+	"fmt"
 )
 
 // 子系统
@@ -154,6 +155,15 @@ func (ui *SubSystem) DeleteSubSystem(sid string) bool {
 	}
 	return false
 }
+
+func (ui *SubSystem) InsertSubSystem() int {
+	o := orm.NewOrm()
+	id, err := o.Insert(ui)
+	if err == nil {
+		fmt.Println(id)
+	}
+}
+
 
 // 系统属性表格
 type SubProperties struct {
