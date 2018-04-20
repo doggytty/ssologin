@@ -1,42 +1,40 @@
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <td>系统ID</td>
-        <td>系统名称</td>
-        <!--<td>秘钥ID</td>-->
-        <!--<td>Secret</td>-->
-        <td>回调</td>
-        <td>状态</td>
-        <td>创建时间</td>
-        <td>操作</td>
-    </tr>
-    </thead>
-    <tbody>
-    {{range $index, $subSystem := .PageSystem}}
-    <tr>
-        <td>{{$subSystem.Sid}}</td>
-        <td>{{$subSystem.SName}}</td>
-        <!--<td>{{$subSystem.ClientId}}</td>-->
-        <!--<td>{{$subSystem.ClientSecret}}</td>-->
-        <td>{{$subSystem.SUrl}}</td>
-        <td>
-            {{if eq $subSystem.Status "0"}}
-            未激活
-            {{else}}
-            激活
-            {{end}}
-        </td>
-        <td>{{dateformat $subSystem.CreateTime "2006-01-02 15:04:05"}}</td>
-        <td>
-            <button>察看</button>
-            <button>删除</button>
-        </td>
-    </tr>
-    {{end}}
-    </tbody>
-</table>
+<div class="form-group">
+    <a class="btn btn-primary" href="/admin/system">新增系统</a>
+</div>
 
-<div>
+<div class="form-group">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <td>系统ID</td>
+            <td>系统名称</td>
+            <td>回调</td>
+            <td>状态</td>
+            <td>创建时间</td>
+            <td>操作</td>
+        </tr>
+        </thead>
+        <tbody>
+        {{range $index, $subSystem := .PageSystem}}
+        <tr>
+            <td>{{$subSystem.Sid}}</td>
+            <td>{{$subSystem.SName}}</td>
+            <td>{{$subSystem.SUrl}}</td>
+            <td>
+                <div class="switch" data-on="primary" data-off="danger" data-sid="{{$subSystem.Sid}}">
+                    <input type="checkbox" {{if $subSystem.Status}}checked{{end}} />
+                </div>
+            </td>
+            <td>{{dateformat $subSystem.CreateTime "2006-01-02 15:04:05"}}</td>
+            <td>
+                <a class="btn btn-primary" href="/admin/system/{{$subSystem.Sid}}">察看</a>
+                <a class="btn btn-primary" href="/admin/system/delete/{{$subSystem.Sid}}">删除</a>
+            </td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+
     <ul class="pagination">
         {{if paginationShowFirst .Pagination.CurrentPage}}
         {{$firstUrl := paginationJump 1 $.Pagination.PageSize ""}}
@@ -68,3 +66,9 @@
         {{end}}
     </ul>
 </div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("[type=checkbox]").bootstrapSwitch();
+    });
+</script>

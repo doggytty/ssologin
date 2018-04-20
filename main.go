@@ -8,6 +8,7 @@ import (
 	"github.com/doggytty/ssologin/models"
 	"fmt"
 	"github.com/doggytty/ssologin/utils"
+	"github.com/astaxie/beego/context"
 )
 
 func main() {
@@ -70,6 +71,13 @@ func main() {
 	//beego.InsertFilter("/*", beego.BeforeRouter, filters.FilterLogin)
 	// 3、admin filter
 	//beego.InsertFilter("/admin/*", beego.BeforeRouter, filters.FilterAdministrator)
+	// 设置form表单支持put\delete
+	var filterMethod = func(ctx *context.Context) {
+		if ctx.Input.Query("_method")!="" && ctx.Input.IsPost(){
+			ctx.Request.Method = ctx.Input.Query("_method")
+		}
+	}
+	beego.InsertFilter("*", beego.BeforeRouter, filterMethod)
 
 	// 自定义template函数
 	beego.AddFuncMap("paginationJump",utils.Jump)

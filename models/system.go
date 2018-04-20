@@ -3,17 +3,16 @@ package models
 import (
 	"github.com/astaxie/beego/orm"
 	"time"
-	"fmt"
 )
 
 // 子系统
 type SubSystem struct {
-	Sid string `orm:"size(20);pk;column(sid)"`
+	Sid string `orm:"size(16);pk;column(sid)"`
 	SName string `orm:"size(50);column(sys_name)"`
-	ClientId string `orm:"size(100);column(client_id)"`	// clientid=md5(sid\md5(secret))
-	ClientSecret string `orm:"size(100);column(client_secret)"`
+	ClientId string `orm:"size(32);column(client_id)"`	// clientid=md5(sid\md5(secret))
+	ClientSecret string `orm:"size(32);column(client_secret)"`
 	SUrl string `orm:"size(100);column(sys_url)"`
-	Status string `orm:"size(100);column(sys_status)"`
+	Status bool `orm:"column(sys_status)"`
 	CreateTime time.Time `orm:"auto_now_add;type(datetime);column(create_time)"`
 }
 
@@ -122,7 +121,7 @@ func (ui *SubSystem) QueryByPage(beginIndex, pageSize int, paramMap map[string]s
 func (ui *SubSystem) ModifySubSystem() bool {
 	o := orm.NewOrm()
 	// 获取 QuerySeter 对象，user 为表名
-	qs := o.QueryTable("user")
+	qs := o.QueryTable(ui)
 	params := orm.Params{}
 	if ui.SName != "" {
 		params["sys_name"] = ui.SName
@@ -136,7 +135,7 @@ func (ui *SubSystem) ModifySubSystem() bool {
 	if ui.SUrl != "" {
 		params["sys_url"] = ui.SUrl
 	}
-	if ui.Status != "" {
+	if ui.Status {
 		params["sys_status"] = ui.Status
 	}
 	num, err := qs.Filter("sid", ui.Sid).Update(params)
@@ -156,12 +155,38 @@ func (ui *SubSystem) DeleteSubSystem(sid string) bool {
 	return false
 }
 
-func (ui *SubSystem) InsertSubSystem() int {
+func (ui *SubSystem) InsertSubSystem() bool {
 	o := orm.NewOrm()
-	id, err := o.Insert(ui)
+	_, err := o.Insert(ui)
 	if err == nil {
-		fmt.Println(id)
+		return true
 	}
+	logger.Error("insert subsystem failed,%v", err)
+	return false
+}
+
+func (ui *SubSystem) CountByName(sysName string) int {
+	o := orm.NewOrm()
+	qs := o.QueryTable(ui)
+	querySetter := qs.Filter("sys_name", sysName)
+	result, err := querySetter.Count()
+	if err != nil {
+		logger.Error("query subsystem count by name failed, %v", err)
+		return -1
+	}
+	return int(result)
+}
+
+func (ui *SubSystem) CountByNameFilterSid(sysName, sid string) int {
+	o := orm.NewOrm()
+	qs := o.QueryTable(ui)
+	querySetter := qs.Filter("sys_name", sysName).Exclude("sid", sid)
+	result, err := querySetter.Count()
+	if err != nil {
+		logger.Error("query subsystem count by name failed, %v", err)
+		return -1
+	}
+	return int(result)
 }
 
 

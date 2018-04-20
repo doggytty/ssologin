@@ -169,12 +169,11 @@ func (ul *UserLogin) LastUserLogin(beginIndex, pageSize int) []*UserLogin {
 }
 
 
-// 用户-系统对应关系
+// 用户-系统对应关系, 有关系可访问,没有则不可访问
 type UserAuth struct {
 	Id int `orm:"pk;auto;column(id)"`
-	Uid string `orm:"size(32);column(uid)"`
-	Sid string `orm:"size(20);column(sid)"`
-	IsAdministrator bool `orm:"column(is_administrator)"`
+	Uid string `orm:"size(32);column(uid);index"`
+	Sid string `orm:"size(20);column(sid);index"`
 	CreateTime time.Time `orm:"auto_now_add;type(datetime);column(create_time)"`
 }
 

@@ -9,12 +9,21 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
-
 var logger = logs.NewLogger()
+
+func init()  {
+	logger.Async()
+	logger.EnableFuncCallDepth(true)
+	if beego.BConfig.RunMode == "dev" {
+		logger.SetLogger(logs.AdapterConsole)
+	} else {
+		logger.SetLogger(logs.AdapterFile, `{"filename":"database.log","daily":true,"maxdays":10}`)
+	}
+}
 
 func SyncDataBase()  {
 	orm.Debug = true
-	createDatabase()
+	//createDatabase()
 	connDatabase()
 
 	// 数据库别名
@@ -90,12 +99,3 @@ func createDatabase() {
 	}
 }
 
-func init()  {
-	logger.Async()
-	logger.EnableFuncCallDepth(true)
-	if beego.BConfig.RunMode == "dev" {
-		logger.SetLogger(logs.AdapterConsole)
-	} else {
-		logger.SetLogger(logs.AdapterFile, `{"filename":"database.log","daily":true,"maxdays":10}`)
-	}
-}
